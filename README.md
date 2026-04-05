@@ -2,6 +2,52 @@
 
 A robust, production-grade chunking system that ensures recording data stays accurate in all cases — **no data loss, no silent failures**. Built as a monorepo with Next.js frontend, Hono backend, and PostgreSQL persistence.
 
+> 🚀 **Quick Start**: See [SETUP.md](SETUP.md) for complete local development instructions.
+
+## Quick Start (5 minutes)
+
+```bash
+# 1. Clone & install
+git clone <repo-url>
+cd Swades-AI-Hackathon
+npm install
+
+# 2. Configure environment
+cp .env.example .env
+# (Update DATABASE_URL if needed)
+
+# 3. Push schema
+npm run db:push
+
+# 4. Start development
+npm run dev
+
+# 5. Open browser
+open http://localhost:3001
+
+# 6. Test the flow
+node test-upload-flow.js
+```
+
+That's it! Backend runs on `:3000`, frontend on `:3001`. See [SETUP.md](SETUP.md) for detailed instructions and troubleshooting.
+
+## 📚 Documentation
+
+### Getting Started
+- **[SETUP.md](SETUP.md)** - Complete local setup guide with step-by-step instructions
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Fast lookup for commands, URLs, and common tasks
+
+### Testing & Verification  
+- **[TEST_RESULTS.md](TEST_RESULTS.md)** - Full test results and verification checklist
+- **[UPLOAD_FLOW_TEST.md](UPLOAD_FLOW_TEST.md)** - Detailed upload flow documentation and manual testing guide
+- **[MANUAL_UPLOAD_TEST.md](MANUAL_UPLOAD_TEST.md)** - Browser UI testing instructions
+
+### Development
+- **[AGENTS.md](AGENTS.md)** - Code quality standards and best practices (Ultracite)
+- **[README.md](README.md)** - Full architecture and API reference (this file)
+
+---
+
 ## Overview
 
 This system implements a **durable, fault-tolerant pipeline** for handling large recording uploads by breaking them into manageable chunks. It ensures data integrity through:
@@ -180,187 +226,81 @@ Recording Start
 
 ## Getting Started
 
+📖 **See [SETUP.md](SETUP.md) for comprehensive local development setup instructions.**
+
+For a quick reference:
+
 ### Prerequisites
 
 - **Node.js 18+** and **npm 10+**
 - **Bun 1.0+** (for backend runtime)
-- **PostgreSQL 14+** (or use Docker)
+- **Docker & Docker Compose** (for local services)
 - **Git**
 
-### Installation
+### 5-Minute Quick Start
 
-1. **Clone and install dependencies**:
-   ```bash
-   git clone <repository-url>
-   cd Swades-AI-Hackathon
-   npm install
-   ```
-
-2. **Set up PostgreSQL Database**:
-
-   **Option A: Neon Serverless (Recommended for production & easier setup)**
-   - Sign up at https://console.neon.tech (free tier available)
-   - Create a new project
-   - Copy the connection string (it looks like: `postgresql://user:password@endpoint.neon.tech/dbname?sslmode=require`)
-   - Paste it into `.env` as `DATABASE_URL`
-
-   **Option B: Docker (Local development)**
-   ```bash
-   cd packages/db
-   docker-compose up -d
-   ```
-   This starts PostgreSQL on `localhost:5432` with:
-   - Database: `my-better-t-app`
-   - User: `postgres`
-   - Password: `password`
-
-3. **Configure environment variables**:
-   Create or update `.env` in the root directory:
-
-   **For Neon**:
-   ```dotenv
-   DATABASE_URL=postgresql://user:password@ep-xxxxx.neon.tech/dbname?sslmode=require
-   NEXT_PUBLIC_SERVER_URL=http://localhost:3000
-   CORS_ORIGIN=http://localhost:3001
-   NODE_ENV=development
-   ```
-
-   **For Local Docker PostgreSQL**:
-   ```dotenv
-   DATABASE_URL=postgresql://postgres:password@localhost:5432/my-better-t-app
-   NEXT_PUBLIC_SERVER_URL=http://localhost:3000
-   CORS_ORIGIN=http://localhost:3001
-   NODE_ENV=development
-   ```
-
-4. **Initialize the database**:
-   ```bash
-   npm run db:push
-   ```
-   This applies Drizzle migrations and creates the schema.
-
-### Development
-
-**Important: Database must be accessible before starting development**
-
-**If using Neon:**
-- Just ensure `.env` has the correct `DATABASE_URL` from Neon
-- No additional setup needed - Neon handles everything
-
-**If using Docker PostgreSQL:**
 ```bash
-# Start PostgreSQL in Docker (from packages/db directory)
-npm run db:start
+# 1. Clone and install
+git clone <repository-url>
+cd Swades-AI-Hackathon
+npm install
 
-# Wait for database to be ready (~10 seconds)
-npm run db:push  # Initialize schema
-```
+# 2. Configure database
+# Option A: Use Neon (recommended)
+# - Sign up at https://console.neon.tech
+# - Copy your connection string to .env as DATABASE_URL
 
-**Start all services in watch mode**:
-```bash
+# Option B: Use Docker
+# cd packages/db && docker-compose up -d
+
+# 3. Initialize schema
+npm run db:push
+
+# 4. Start development servers
 npm run dev
+# Frontend: http://localhost:3001
+# Backend: http://localhost:3000
+
+# 5. Test the upload flow
+node test-upload-flow.js
 ```
 
-This starts:
-- **Web app**: http://localhost:3001 (Next.js dev server)
-- **API server**: http://localhost:3000 (Hono server via Bun)
-- Both watch for file changes automatically
+### Full Setup Guide
 
-**Troubleshooting startup issues**:
-```bash
-# If port 3000 or 3001 already in use, find and kill processes
-lsof -i :3000
-lsof -i :3001
-kill -9 <PID>
+See [SETUP.md](SETUP.md) for detailed instructions including:
+- Prerequisites validation
+- Environment variable configuration
+- Database setup (Neon or Docker)
+- MinIO S3 storage setup
+- Development server startup
+- Testing the upload pipeline
+- Troubleshooting common issues
+- Docker deployment
 
-# Or run services individually in separate terminals
-npm run dev:web      # Terminal 1: Next.js only
-npm run dev:server   # Terminal 2: Hono API only
-```
-
-**Verify setup is working**:
-```bash
-# In another terminal, test the API
-curl http://localhost:3000/
-# Should return: OK
-
-# Visit web app
-open http://localhost:3001
-```
-
-### Database Commands
-
-**If using Neon:**
-```bash
-# Push schema changes (auto-migrates on Neon)
-npm run db:push
-
-# View/edit database in Drizzle Studio
-npm run db:studio
-# Open http://localhost:5555
-```
-
-**If using Docker PostgreSQL:**
-```bash
-# Start PostgreSQL container
-npm run db:start
-
-# Stop PostgreSQL container
-npm run db:stop
-
-# Push schema changes (dev only, auto-migrates)
-npm run db:push
-
-# Generate new Drizzle migrations
-npm run db:generate
-
-# Apply pending migrations
-npm run db:migrate
-
-# Open Drizzle Studio (visual database editor on port 5555)
-npm run db:studio
-
-# Tear down and reset database (removes all data)
-npm run db:down
-npm run db:start
-npm run db:push
-```
-
-### Building for Production
+### Common Commands
 
 ```bash
-npm run build          # Build all packages
-npm run check-types    # Type-check all packages
-npm run check          # Lint code (Ultracite)
-npm run fix            # Auto-fix code issues
+# Development
+npm run dev                # Start all services
+npm run dev:web           # Frontend only
+npm run dev:server        # Backend only
+
+# Database
+npm run db:push           # Initialize schema
+npm run db:studio         # Open database UI
+npm run db:start          # Start Docker PostgreSQL
+npm run db:stop           # Stop Docker PostgreSQL
+
+# Code Quality
+npm run check             # Type check & lint
+npm run fix               # Auto-fix issues
+npm run check-types       # TypeScript validation
+
+# Build & Deploy
+npm run build             # Build all packages
 ```
 
-Build outputs:
-- Web: `.next/` directory
-- Server: `dist/` directory (compiled with tsdown)
-
-### Running in Production
-
-**Frontend**:
-```bash
-cd apps/web
-npm run build
-npm run start
-```
-
-**Backend**:
-```bash
-cd apps/server
-npm run build
-npm run start
-```
-
-Or use the compiled Bun executable:
-```bash
-cd apps/server
-npm run compile    # Compiles to standalone binary
-./server           # Run the binary
-```
+See [SETUP.md](SETUP.md) for the complete command reference and troubleshooting guide.
 
 ## API Reference
 
