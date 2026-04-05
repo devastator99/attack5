@@ -1,5 +1,3 @@
-// lib/opfs.ts
-
 export async function getRoot() {
   return await navigator.storage.getDirectory();
 }
@@ -29,8 +27,8 @@ export async function listChunks(): Promise<string[]> {
   const root = await getRoot();
   const files: string[] = [];
 
-  for await (const [name] of root.entries()) {
-    files.push(name);
+  for await (const entry of (root as any).entries()) {
+    files.push(entry[0]);
   }
 
   return files;

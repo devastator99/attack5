@@ -223,6 +223,15 @@ Recording Start
 
 ### Development
 
+**Important: Ensure database is running before starting development**:
+```bash
+# Start PostgreSQL in Docker (from packages/db directory)
+npm run db:start
+
+# Wait for database to be ready (~10 seconds)
+npm run db:push  # Initialize schema
+```
+
 **Start all services in watch mode**:
 ```bash
 npm run dev
@@ -231,33 +240,55 @@ npm run dev
 This starts:
 - **Web app**: http://localhost:3001 (Next.js dev server)
 - **API server**: http://localhost:3000 (Hono server via Bun)
+- Both watch for file changes automatically
 
-**Or run individually**:
+**Troubleshooting startup issues**:
 ```bash
-npm run dev:web      # Next.js only
-npm run dev:server   # Hono API only
+# If port 3000 or 3001 already in use, find and kill processes
+lsof -i :3000
+lsof -i :3001
+kill -9 <PID>
+
+# Or run services individually in separate terminals
+npm run dev:web      # Terminal 1: Next.js only
+npm run dev:server   # Terminal 2: Hono API only
+```
+
+**Verify setup is working**:
+```bash
+# In another terminal, test the API
+curl http://localhost:3000/
+# Should return: OK
+
+# Visit web app
+open http://localhost:3001
 ```
 
 ### Database Commands
 
 ```bash
-# Generate Drizzle migrations
+# Start PostgreSQL container (if not running)
+npm run db:start
+
+# Stop PostgreSQL container
+npm run db:stop
+
+# Push schema changes (dev only, auto-migrates)
+npm run db:push
+
+# Generate new Drizzle migrations
 npm run db:generate
 
 # Apply pending migrations
 npm run db:migrate
 
-# Push schema changes (dev only)
-npm run db:push
-
-# Open Drizzle Studio (visual database editor)
+# Open Drizzle Studio (visual database editor on port 5555)
 npm run db:studio
 
-# Stop database container
-npm run db:stop
-
-# Tear down database
+# Tear down and reset database (removes all data)
 npm run db:down
+npm run db:start
+npm run db:push
 ```
 
 ### Building for Production
@@ -344,12 +375,53 @@ Chunks are stored persistently in OPFS before upload. This ensures data survives
 - Browser crashes
 - Page refreshes
 
-**Key functions** (`client/lib/opfs.ts`):
+**Browser Support**: Chrome/Edge 86+, Firefox 111+, Safari 15.1+
+
+**Key functions** ([client/lib/opfs.ts](client/lib/opfs.ts)):
 ```typescript
-writeChunk(id: string, blob: Blob)        // Store chunk
-readChunk(id: string): ArrayBuffer        // Retrieve chunk
-deleteChunk(id: string)                   // Remove after upload
-listChunks(): Promise<string[]>           // Enumerate stored chunks
+writeChunk(id: string, blob: Blob)        // Store chunk to OPFS
+readChunk(id: string): ArrayBuffer        // Retrieve chunk from OPFS
+deleteChunk(id: string)                   // Remove chunk after confirmation
+listChunks(): Promise<string[]>           // Enumerate all stored chunks
+getRoot(): FileSystemDirectoryHandle      // Access OPFS root directory
+```
+
+**OPFS API Details**:
+- Storage location: Browser's private, isolated storage (not accessible to other origins)
+- Quota: Typically 50% of available disk space (varies by browser)
+- Performance: High-speed synchronous-like access (actually async but optimized)
+- Persistence: Survives browser restarts, cleared only on cache clear
+
+**TypeScript note**: The `FileSystemDirectoryHandle` type from TS lib.dom may not include all OPFS methods. We use type casting `as any` where needed for `.entries()` iteration, which is a valid OPFS API at runtime.
+
+**Example usage**:
+```typescript
+// Save recording chunk to OPFS
+const chunkBlob = new Blob([audioData], { type: 'audio/wav' });
+await writeChunk('chunk-123', chunkBlob);
+
+// Later, retrieve and upload
+const buffer = await readChunk('chunk-123');
+const formData = new FormData();
+formData.append('file', new Blob([buffer]));
+await fetch('/api/upload', { method: 'POST', body: formData });
+
+// Clean up after confirmation
+await deleteChunk('chunk-123');
+
+// List all pending chunks
+const chunks = await listChunks();
+console.log(`${chunks.length} chunks waiting to upload`);
+```
+
+**Capacity monitoring**:
+```typescript
+// Check available OPFS space (if API available)
+if ('storage' in navigator) {
+  const estimate = await navigator.storage.estimate();
+  const percentUsed = (estimate.usage / estimate.quota) * 100;
+  console.log(`OPFS usage: ${percentUsed.toFixed(2)}%`);
+}
 ```
 
 ### Queue Management
@@ -538,52 +610,245 @@ EXPOSE 3001
 CMD ["npm", "start", "-w", "apps/web"]
 ```
 
-### Environment Variables
+### Configuration
 
-**Production `.env`**:
+Create a `.env` file in the root directory with the following variables:
+
 ```dotenv
-NODE_ENV=production
-DATABASE_URL=postgresql://user:password@db-host/dbname
-NEXT_PUBLIC_SERVER_URL=https://api.example.com
-CORS_ORIGIN=https://app.example.com
+# Database connection (PostgreSQL)
+DATABASE_URL=postgresql://postgres:password@localhost:5432/my-better-t-app
+
+# Frontend server (what the backend expects)
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+
+# CORS origin (what frontend origin is allowed)
+CORS_ORIGIN=http://localhost:3001
+
+# Environment (development, production, test)
+NODE_ENV=development
+
+# Optional: S3/MinIO configuration
 S3_BUCKET=recording-chunks
 S3_REGION=us-east-1
-S3_ACCESS_KEY_ID=***
-S3_SECRET_ACCESS_KEY=***
+S3_ENDPOINT=http://localhost:9000          # For MinIO (optional)
+S3_ACCESS_KEY_ID=minioadmin                # For MinIO (optional)
+S3_SECRET_ACCESS_KEY=minioadmin            # For MinIO (optional)
 ```
+
+**Key variables explained**:
+
+| Variable | Where It's Used | Example | Required |
+|----------|------------------|---------|----------|
+| `DATABASE_URL` | Backend (apps/server) | `postgresql://...` | Yes |
+| `NEXT_PUBLIC_SERVER_URL` | Frontend (apps/web) | `http://localhost:3000` | Yes |
+| `CORS_ORIGIN` | Backend API CORS config | `http://localhost:3001` | Yes |
+| `NODE_ENV` | Build/runtime environment | `development` | No (default: development) |
+| `S3_*` | Backend storage | MinIO credentials | Only if using S3/MinIO |
 
 ## Troubleshooting
 
 ### Database Connection Issues
 
+**Problem: `connect ECONNREFUSED 127.0.0.1:5432`**
 ```bash
-# Check PostgreSQL is running
+# Check if PostgreSQL is running
 docker ps | grep postgres
 
-# View PostgreSQL logs
-docker logs my-better-t-app-postgres
-
-# Restart database
-npm run db:stop && docker-compose up -d
-
-# Reset database
-npm run db:down
+# Start the database container
 npm run db:start
+
+# Wait a few seconds for startup, then try again
+sleep 5
 npm run db:push
 ```
 
-### Upload Failures
+**Problem: Database already exists or migration conflicts**
+```bash
+# Reset database completely (⚠️ removes all data)
+npm run db:down
 
-- **Checksum mismatch**: Verify chunk data integrity before upload
-- **Network timeout**: Increase retry timeout or reduce batch size
-- **OPFS quota exceeded**: Browser local storage full; delete old sessions
-- **CORS error**: Check `CORS_ORIGIN` env var matches client origin
+# Start fresh
+npm run db:start
+npm run db:push
+
+# Or view/edit schema in UI
+npm run db:studio
+```
+
+**Problem: Port 5432 already in use**
+```bash
+# Find what's using the port
+lsof -i :5432
+
+# Stop that process or use a different database URL
+DATABASE_URL=postgresql://user:pass@localhost:5433/db npm run db:push
+```
+
+### Development Server Issues
+
+**Problem: Port 3000 or 3001 already in use**
+```bash
+# Find processes using the ports
+lsof -i :3000
+lsof -i :3001
+
+# Kill the process
+kill -9 <PID>
+
+# Or let npm pick a different port
+PORT=3002 npm run dev:web
+```
+
+**Problem: `npm run dev` exits with code 1**
+```bash
+# Check for environment variable issues
+cat .env
+
+# Verify all required env vars are set
+echo $DATABASE_URL
+echo $NEXT_PUBLIC_SERVER_URL
+echo $CORS_ORIGIN
+
+# Try running with explicit env file
+node -r dotenv/config apps/web/next.config.ts
+```
+
+**Problem: Module not found or TypeScript errors**
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules
+npm install
+
+# Rebuild TypeScript
+npm run check-types
+
+# Fix code issues automatically
+npm run fix
+```
+
+### OPFS-Related Issues
+
+**Problem: "OPFS not available" or undefined navigator.storage**
+- OPFS requires a secure context (HTTPS or localhost)
+- Not available in all browsers yet (check browser support above)
+- Solution: Use a modern browser (Chrome 86+, Firefox 111+, Safari 15.1+)
+
+**Problem: "QuotaExceededError" when writing chunks**
+```typescript
+// Check available space before recording
+const estimate = await navigator.storage.estimate();
+if (estimate.usage > estimate.quota * 0.9) {
+  console.warn('OPFS nearly full, consider clearing old recordings');
+  // Clear old sessions from OPFS
+  const chunks = await listChunks();
+  for (const chunk of chunks) {
+    await deleteChunk(chunk);
+  }
+}
+```
+
+**Problem: TypeScript errors with FileSystemDirectoryHandle**
+- The browser's OPFS API may have methods not reflected in TypeScript lib.dom types
+- Solution: Use type casting `(obj as any).methodName()` for advanced OPFS methods
+- See [client/lib/opfs.ts](client/lib/opfs.ts) for examples
+
+### Upload/API Issues
+
+**Problem: 404 on `/api/upload`**
+```bash
+# Ensure backend is running on port 3000
+curl http://localhost:3000/
+# Should return: OK
+
+# Check API server logs
+npm run dev:server
+# Look for "Listening on" message
+```
+
+**Problem: CORS errors on chunk upload**
+```bash
+# Verify CORS_ORIGIN env var matches client origin
+echo $CORS_ORIGIN
+
+# Should match the web app origin (e.g., http://localhost:3001)
+# Update in .env if needed and restart server
+```
+
+**Problem: Checksum validation failures**
+- Chunk may be corrupted during upload
+- Solution: Check network stability, reduce batch size (in [client/lib/uploader.ts](client/lib/uploader.ts))
+- Inspect failed chunks in browser DevTools → Application → OPFS
 
 ### Performance Issues
 
-- **Slow uploads**: Reduce batch size (default: 3) or chunk size (64KB-1MB)
-- **Database lag**: Add indexes to `chunks` table on `sessionId` and `chunkIndex`
-- **Memory spike**: Monitor server memory; consider connection pooling for DB
+**Problem: Slow uploads**
+```bash
+# Check network (DevTools Network tab)
+# Check server logs for processing time
+# Reduce batch size in client/lib/queue.ts from 3 to 1
+
+# Monitor database connections
+npm run db:studio
+# View active queries and connections
+```
+
+**Problem: High memory usage on server**
+```bash
+# Monitor process
+top -p $(pgrep -f 'bun.*index.ts')
+
+# Check for connection leaks in database client
+# Ensure connections are properly closed in handlers
+```
+
+**Problem: Database connection pool exhausted**
+```bash
+# Restart server (will close all connections)
+npm run dev:server
+
+# Or check active connections in Drizzle Studio
+npm run db:studio
+```
+
+### Development Workflow
+
+**Best practices for smooth development**:
+
+1. **Always start database first**:
+   ```bash
+   npm run db:start
+   npm run db:push  # Ensure schema is current
+   ```
+
+2. **Run services in separate terminals**:
+   ```bash
+   # Terminal 1: Frontend
+   npm run dev:web
+   
+   # Terminal 2: Backend
+   npm run dev:server
+   
+   # Terminal 3: Optional - database UI
+   npm run db:studio
+   ```
+
+3. **Check code before committing**:
+   ```bash
+   npm run check-types   # TypeScript errors
+   npm run check         # Lint errors
+   npm run fix           # Auto-fix issues
+   ```
+
+4. **Use DevTools for debugging**:
+   - **Application tab**: Inspect OPFS storage
+   - **Network tab**: Monitor API calls and response times
+   - **Console**: Check for JavaScript errors
+   - **Performance tab**: Profile rendering and network
+
+5. **Monitor database state**:
+   ```bash
+   npm run db:studio
+   # Open http://localhost:5555 for visual editing
 
 ## Contributing
 
