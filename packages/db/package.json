@@ -30,6 +30,9 @@
     "@my-better-t-app/config": "*",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.31.8",
-    "typescript": "^5"
+    "oxfmt": "^0.43.0",
+    "oxlint": "^1.58.0",
+    "typescript": "^5",
+    "ultracite": "^7.4.3"
   }
 }
