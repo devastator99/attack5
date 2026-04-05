@@ -1,25 +1,37 @@
-// server/src/lib/db.ts
+// server/lib/db.ts
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
-// 🔐 Make sure this exists in your .env
+// 🔐 Neon serverless PostgreSQL connection
+// Get your connection string from https://console.neon.tech
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
-// ✅ create pg pool
+// ✅ Create connection pool optimized for Neon
 const pool = new Pool({
   connectionString,
+  // Neon handles connection pooling, keep these conservative
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
-// ✅ drizzle instance
+// Handle pool errors
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle client", err);
+});
+
+// ✅ Drizzle instance with Neon
 export const db = drizzle(pool);
 
-
-
+// ✅ Graceful shutdown
+export function closeDb() {
+  return pool.end();
+}
 
 
 

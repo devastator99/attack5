@@ -196,7 +196,15 @@ Recording Start
    npm install
    ```
 
-2. **Set up PostgreSQL** (if not already running):
+2. **Set up PostgreSQL Database**:
+
+   **Option A: Neon Serverless (Recommended for production & easier setup)**
+   - Sign up at https://console.neon.tech (free tier available)
+   - Create a new project
+   - Copy the connection string (it looks like: `postgresql://user:password@endpoint.neon.tech/dbname?sslmode=require`)
+   - Paste it into `.env` as `DATABASE_URL`
+
+   **Option B: Docker (Local development)**
    ```bash
    cd packages/db
    docker-compose up -d
@@ -208,6 +216,16 @@ Recording Start
 
 3. **Configure environment variables**:
    Create or update `.env` in the root directory:
+
+   **For Neon**:
+   ```dotenv
+   DATABASE_URL=postgresql://user:password@ep-xxxxx.neon.tech/dbname?sslmode=require
+   NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+   CORS_ORIGIN=http://localhost:3001
+   NODE_ENV=development
+   ```
+
+   **For Local Docker PostgreSQL**:
    ```dotenv
    DATABASE_URL=postgresql://postgres:password@localhost:5432/my-better-t-app
    NEXT_PUBLIC_SERVER_URL=http://localhost:3000
@@ -223,7 +241,13 @@ Recording Start
 
 ### Development
 
-**Important: Ensure database is running before starting development**:
+**Important: Database must be accessible before starting development**
+
+**If using Neon:**
+- Just ensure `.env` has the correct `DATABASE_URL` from Neon
+- No additional setup needed - Neon handles everything
+
+**If using Docker PostgreSQL:**
 ```bash
 # Start PostgreSQL in Docker (from packages/db directory)
 npm run db:start
@@ -266,8 +290,19 @@ open http://localhost:3001
 
 ### Database Commands
 
+**If using Neon:**
 ```bash
-# Start PostgreSQL container (if not running)
+# Push schema changes (auto-migrates on Neon)
+npm run db:push
+
+# View/edit database in Drizzle Studio
+npm run db:studio
+# Open http://localhost:5555
+```
+
+**If using Docker PostgreSQL:**
+```bash
+# Start PostgreSQL container
 npm run db:start
 
 # Stop PostgreSQL container
@@ -583,6 +618,22 @@ Run: `k6 run loadtest.js`
 
 ## Deployment
 
+### Quick Start with Neon (Recommended)
+
+**For production deployment**:
+
+1. Create a Neon project at https://console.neon.tech (free tier available)
+2. Get your production connection string (includes automatic connection pooling)
+3. Set `DATABASE_URL` to your Neon connection string in production environment
+4. Deploy frontend and backend (see Docker section below)
+
+**Neon handles**:
+- Automatic backups and PITR (Point-In-Time Recovery)
+- Connection pooling and scaling
+- SSL encryption
+- Multi-database support
+- Free tier: 3 projects, 0.5 GB storage, shared compute
+
 ### Docker
 
 **Build backend container**:
@@ -610,13 +661,31 @@ EXPOSE 3001
 CMD ["npm", "start", "-w", "apps/web"]
 ```
 
+**Production deployment with Neon**:
+```bash
+# Build containers
+docker build -f Dockerfile.server -t myapp-server .
+docker build -f Dockerfile.web -t myapp-web .
+
+# Set production env (includes Neon connection string)
+export DATABASE_URL=postgresql://user:pass@ep-prod.neon.tech/db?sslmode=require
+export NEXT_PUBLIC_SERVER_URL=https://api.yourdomain.com
+export CORS_ORIGIN=https://app.yourdomain.com
+
+# Run containers
+docker run -p 3000:3000 -e DATABASE_URL myapp-server
+docker run -p 3001:3001 -e NEXT_PUBLIC_SERVER_URL myapp-web
+```
+
 ### Configuration
 
 Create a `.env` file in the root directory with the following variables:
 
+**Using Neon Serverless (Recommended)**:
 ```dotenv
-# Database connection (PostgreSQL)
-DATABASE_URL=postgresql://postgres:password@localhost:5432/my-better-t-app
+# Get this from https://console.neon.tech
+# Format: postgresql://username:password@endpoint.neon.tech/dbname?sslmode=require
+DATABASE_URL=postgresql://user:password@ep-xxxxx.neon.tech/my-better-t-app?sslmode=require
 
 # Frontend server (what the backend expects)
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
@@ -630,26 +699,58 @@ NODE_ENV=development
 # Optional: S3/MinIO configuration
 S3_BUCKET=recording-chunks
 S3_REGION=us-east-1
-S3_ENDPOINT=http://localhost:9000          # For MinIO (optional)
-S3_ACCESS_KEY_ID=minioadmin                # For MinIO (optional)
-S3_SECRET_ACCESS_KEY=minioadmin            # For MinIO (optional)
+```
+
+**Using Local Docker PostgreSQL**:
+```dotenv
+# Local PostgreSQL connection
+DATABASE_URL=postgresql://postgres:password@localhost:5432/my-better-t-app
+
+# Frontend server
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+
+# CORS origin
+CORS_ORIGIN=http://localhost:3001
+
+# Environment
+NODE_ENV=development
 ```
 
 **Key variables explained**:
 
 | Variable | Where It's Used | Example | Required |
 |----------|------------------|---------|----------|
-| `DATABASE_URL` | Backend (apps/server) | `postgresql://...` | Yes |
+| `DATABASE_URL` | Backend (apps/server) | `postgresql://...` or Neon URL | Yes |
 | `NEXT_PUBLIC_SERVER_URL` | Frontend (apps/web) | `http://localhost:3000` | Yes |
 | `CORS_ORIGIN` | Backend API CORS config | `http://localhost:3001` | Yes |
 | `NODE_ENV` | Build/runtime environment | `development` | No (default: development) |
-| `S3_*` | Backend storage | MinIO credentials | Only if using S3/MinIO |
+| `S3_*` | Backend storage | MinIO/AWS credentials | Only if using S3/MinIO |
+
+**Neon-specific notes**:
+- Free tier includes: 3 projects, 0.5 GB storage, shared compute
+- Connection pooling is built-in on Neon
+- Use `sslmode=require` in connection string for security
+- Automatic backups included
 
 ## Troubleshooting
 
 ### Database Connection Issues
 
-**Problem: `connect ECONNREFUSED 127.0.0.1:5432`**
+**Problem: `connect ECONNREFUSED 127.0.0.1:5432` (Neon)**
+```bash
+# Verify DATABASE_URL is set correctly
+echo $DATABASE_URL
+# Should start with: postgresql://
+
+# Check Neon connection string format
+# Must include: ?sslmode=require at the end
+# Example: postgresql://user:pass@ep-xxxxx.neon.tech/dbname?sslmode=require
+
+# Verify credentials in https://console.neon.tech/app/projects
+# Copy connection string again if needed
+```
+
+**Problem: `connect ECONNREFUSED 127.0.0.1:5432` (Docker PostgreSQL)**
 ```bash
 # Check if PostgreSQL is running
 docker ps | grep postgres
@@ -662,25 +763,39 @@ sleep 5
 npm run db:push
 ```
 
-**Problem: Database already exists or migration conflicts**
+**Problem: Neon connection string includes database that doesn't exist**
 ```bash
-# Reset database completely (⚠️ removes all data)
-npm run db:down
+# Verify database name in connection string
+# Format: ...@ep-xxxxx.neon.tech/dbname?sslmode=require
+#                                 ^^^^^^
 
-# Start fresh
-npm run db:start
-npm run db:push
-
-# Or view/edit schema in UI
-npm run db:studio
+# If wrong, update .env and retry:
+# DATABASE_URL=postgresql://user:pass@ep-xxxxx.neon.tech/correct-dbname?sslmode=require
 ```
 
-**Problem: Port 5432 already in use**
+**Problem: "SSL validation failed" with Neon**
+- Ensure connection string includes `?sslmode=require`
+- Some network environments require additional SSL configuration
+- Solution: Add to connection string: `&sslmode=require`
+
+**Problem: Database already exists or migration conflicts**
+```bash
+# Reset using Drizzle Studio
+npm run db:studio
+# Use UI to delete tables and reset
+
+# Or with Docker PostgreSQL, completely reset
+npm run db:down
+npm run db:start
+npm run db:push
+```
+
+**Problem: Port 5432 already in use (Docker only)**
 ```bash
 # Find what's using the port
 lsof -i :5432
 
-# Stop that process or use a different database URL
+# Stop that process or use a different port
 DATABASE_URL=postgresql://user:pass@localhost:5433/db npm run db:push
 ```
 
