@@ -1,11 +1,11 @@
 // server/src/routes/upload.ts
 import { Hono } from "hono";
-import { db } from "../lib/db";
-import { chunks } from "../schema/chunks";
+import {db} from "../../lib/db";
+import { chunks } from "../../schema/chunks";
 import { eq } from "drizzle-orm";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { s3 } from "../lib/storage";
-import { sha256 } from "../lib/checksum";
+import { s3 } from "../../lib/storage";
+import { sha256 } from "../../lib/checksum";
 
 const uploadRoute = new Hono();
 

@@ -1,8 +1,11 @@
-// upload.worker.ts
+/// <reference lib="webworker" />
+export {};
 
 import { addToQueue, getNextBatch } from "../lib/queue";
 import { writeChunk } from "../lib/opfs";
 import { uploadItem } from "../lib/uploader";
+
+const ctx: DedicatedWorkerGlobalScope = self as any;
 
 let running = false;
 
@@ -10,40 +13,66 @@ async function loop() {
   if (running) return;
   running = true;
 
+  console.log("[Worker] Upload loop started");
+
   while (true) {
-    const batch = getNextBatch(3);
+    try {
+      const batch = getNextBatch(3);
 
-    await Promise.all(batch.map(uploadItem));
+      if (batch.length === 0) {
+        // 🧠 nothing to upload → sleep longer
+        await sleep(2000);
+        continue;
+      }
 
-    await sleep(1000);
+      console.log("[Worker] Uploading batch:", batch.length);
+
+      await Promise.allSettled(batch.map(uploadItem));
+
+    } catch (err) {
+      console.error("[Worker] Loop error:", err);
+    }
+
+    // small delay between cycles
+    await sleep(500);
   }
 }
 
 function sleep(ms: number) {
-  return new Promise(res => setTimeout(res, ms));
+  return new Promise((res) => setTimeout(res, ms));
 }
 
 // 📩 receive chunk from UI
-self.onmessage = async (e) => {
-  const { blob, sessionId, chunkIndex, checksum } = e.data;
+ctx.onmessage = async (e: MessageEvent) => {
+  try {
+    const { blob, sessionId, chunkIndex, checksum } = e.data;
 
-  const id = `${sessionId}-${chunkIndex}`;
+    if (!blob || !sessionId || chunkIndex === undefined || !checksum) {
+      console.error("[Worker] Invalid message", e.data);
+      return;
+    }
 
-  // 1. Save to OPFS
-  await writeChunk(id, blob);
+    const id = `${sessionId}-${chunkIndex}`;
 
-  // 2. Add to queue
-  addToQueue({
-    id,
-    sessionId,
-    chunkIndex,
-    checksum,
-    retries: 0,
-    status: "pending",
-  });
+    console.log("[Worker] Received chunk:", id);
 
-  // 3. Start loop
-  loop();
+    // 1. Save to OPFS (CRITICAL)
+    await writeChunk(id, blob);
+
+    // 2. Add to queue
+    addToQueue({
+      id,
+      sessionId,
+      chunkIndex,
+      checksum,
+      retries: 0,
+      status: "pending",
+    });
+
+    // 3. Start loop (only once)
+    loop();
+
+  } catch (err) {
+    console.error("[Worker] Message handling error:", err);
+  }
 };
-
-export {};

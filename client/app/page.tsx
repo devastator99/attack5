@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 export default function Recorder() {
   const workerRef = useRef<Worker | null>(null);
-  let chunkIndex = 0;
+  const chunkIndexRef = useRef(0);
   const sessionId = "session-" + Date.now();
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function Recorder() {
 
     const mediaRecorder = new MediaRecorder(stream);
 
-    mediaRecorder.ondataavailable = async (event) => {
+    mediaRecorder.ondataavailable = async (event:any) => {
       const blob = event.data;
 
       const checksum = await sha256(blob);
@@ -30,7 +30,7 @@ export default function Recorder() {
       workerRef.current?.postMessage({
         blob,
         sessionId,
-        chunkIndex: chunkIndex++,
+        chunkIndex: chunkIndexRef.current++,
         checksum,
       });
     };
