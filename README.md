@@ -2,53 +2,297 @@
 
 A robust, production-grade chunking system that ensures recording data stays accurate in all cases — **no data loss, no silent failures**. Built as a monorepo with Next.js frontend, Hono backend, and PostgreSQL persistence.
 
-> 🚀 **Quick Start**: See [SETUP.md](SETUP.md) for complete local development instructions.
+---
 
-## Quick Start (5 minutes)
+## 🚀 **Get Started in 3 Minutes**
 
+### Prerequisites - Check You Have These ✅
+Run this to verify your system is ready:
 ```bash
-# 1. Clone & install
+node --version     # Should be v18 or higher
+npm --version      # Should be v10 or higher
+git --version      # Should output a version
+```
+
+If any are missing:
+- **Node.js**: https://nodejs.org (download v18 or higher)
+- **Git**: https://git-scm.com
+
+That's all you need! Everything else is automatic.
+
+### Step-by-Step Setup
+
+#### 1️⃣ Clone and Install (1 minute)
+```bash
+# Clone the repository
 git clone <repo-url>
 cd Swades-AI-Hackathon
+
+# Install all dependencies
 npm install
+```
 
-# 2. Configure environment
+#### 2️⃣ Configure Environment (30 seconds)
+```bash
+# Copy the example environment file
 cp .env.example .env
-# (Update DATABASE_URL if needed)
 
-# 3. Push schema
-npm run db:push
+# The .env file is already pre-configured for local development!
+# Check the file to make sure it looks good
+cat .env
+```
 
-# 4. Start development
+#### 3️⃣ Start Everything (30 seconds)
+```bash
+# Start backend, frontend, and database
 npm run dev
+```
 
-# 5. Open browser
+Wait for the output to show:
+```
+✓ Ready in 201ms
+Backend: Started development server: http://localhost:3000
+Frontend: http://localhost:3001
+```
+
+#### 4️⃣ Open in Browser
+```bash
+# Open the application
 open http://localhost:3001
 
-# 6. Test the flow
+# Or manually: http://localhost:3001
+```
+
+#### 5️⃣ Run Tests (Optional)
+```bash
+# In a new terminal, test the upload pipeline
 node test-upload-flow.js
 ```
 
-That's it! Backend runs on `:3000`, frontend on `:3001`. See [SETUP.md](SETUP.md) for detailed instructions and troubleshooting.
-
-## 📚 Documentation
-
-### Getting Started
-- **[SETUP.md](SETUP.md)** - Complete local setup guide with step-by-step instructions
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Fast lookup for commands, URLs, and common tasks
-
-### Testing & Verification  
-- **[TEST_RESULTS.md](TEST_RESULTS.md)** - Full test results and verification checklist
-- **[UPLOAD_FLOW_TEST.md](UPLOAD_FLOW_TEST.md)** - Detailed upload flow documentation and manual testing guide
-- **[MANUAL_UPLOAD_TEST.md](MANUAL_UPLOAD_TEST.md)** - Browser UI testing instructions
-
-### Development
-- **[AGENTS.md](AGENTS.md)** - Code quality standards and best practices (Ultracite)
-- **[README.md](README.md)** - Full architecture and API reference (this file)
+**That's it! You're ready to go.** ✅
 
 ---
 
-## Overview
+## 📚 Documentation
+
+### 🎯 **New Here? Start Here**
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** ⭐ **Absolute easiest way to boot up** - Step by step with no jargon
+- **[BOOT_UP_GUIDE.md](BOOT_UP_GUIDE.md)** - Visual boot-up process with troubleshooting
+
+### Quick Links
+- **[TEST_VERIFICATION.md](TEST_VERIFICATION.md)** - Quick access guide and service URLs
+- **[TEST_END2END_REPORT.md](TEST_END2END_REPORT.md)** - Complete test results
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Fast lookup for commands
+
+### Complete Guides
+- **[SETUP.md](SETUP.md)** - Detailed setup with multiple database options
+- **[UPLOAD_FLOW_TEST.md](UPLOAD_FLOW_TEST.md)** - Testing documentation
+- **[AGENTS.md](AGENTS.md)** - Code quality standards (Ultracite)
+
+---
+
+## 💡 What You'll See
+
+After running `npm run dev`, you should see:
+
+```
+✓ Ready in 201ms
+Frontend: http://localhost:3001
+Backend: Started development server: http://localhost:3000
+```
+
+### Access Points
+| Service | URL | What to Do |
+|---------|-----|-----------|
+| **Web App** | http://localhost:3001 | Test the audio recorder |
+| **API** | http://localhost:3000 | Backend is running (returns `OK`) |
+| **Test** | `node test-upload-flow.js` | Run the test suite |
+
+### First Time? Try This
+1. **Open** http://localhost:3001 in your browser
+2. **Click** the "Recorder" link to test recording
+3. **Run** `node test-upload-flow.js` to verify everything works
+
+---
+
+## ✨ How to Know Everything is Working
+
+Open your browser to **http://localhost:3001** and you should see:
+
+1. **The web app loads** - You see the header "my-better-t-app"
+2. **Navigation works** - Links in the header are clickable
+3. **No console errors** - Open DevTools (F12) → Console should be clean
+4. **Test passes** - Run `node test-upload-flow.js` and see all ✅ marks
+
+If you see all of these, **congratulations! You're all set.** 🎉
+
+## ⚠️ Common Issues & Fixes
+
+### Issue: `npm install` fails or takes forever
+**Solution:**
+```bash
+# Clear npm cache and try again
+npm cache clean --force
+npm install
+```
+
+### Issue: Port 3000 or 3001 already in use
+**Solution:** Kill the process using the port:
+```bash
+# Find what's using port 3000
+lsof -i :3000
+
+# Kill it (replace 12345 with the PID from the output)
+kill -9 12345
+```
+
+Or change the ports:
+```bash
+PORT=3002 npm run dev:web
+```
+
+### Issue: `DATABASE_URL` is invalid or connection fails
+**Solution:** The .env is pre-configured. If it still fails:
+```bash
+# Option 1: Check if .env file exists
+ls -la .env
+
+# Option 2: Reset .env to defaults
+cp .env.example .env
+
+# Option 3: Use a simple local database (no Docker needed)
+# This is already configured in .env by default
+```
+
+### Issue: TypeScript or build errors
+**Solution:**
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules
+npm install
+
+# Type-check
+npm run check-types
+```
+
+### Issue: `npm run dev` exits immediately
+**Solution:**
+```bash
+# Check all required env variables are set
+cat .env
+
+# Should contain: DATABASE_URL, NEXT_PUBLIC_SERVER_URL, CORS_ORIGIN
+
+# Try starting servers separately
+npm run dev:server   # Terminal 1
+npm run dev:web      # Terminal 2
+```
+
+### Issue: "Cannot connect to server" error
+**Solution:**
+```bash
+# Make sure backend is running
+curl http://localhost:3000/
+
+# Should respond with: OK
+
+# If it doesn't, check logs:
+npm run dev:server
+```
+
+---
+
+## 📋 Useful Commands
+
+### Development
+```bash
+# Start everything (frontend + backend)
+npm run dev
+
+# Start only frontend (Next.js on port 3001)
+npm run dev:web
+
+# Start only backend (Hono on port 3000)
+npm run dev:server
+
+# Check code quality
+npm run check         # Find issues
+npm run fix          # Auto-fix issues
+npm run check-types  # TypeScript validation
+```
+
+### Database
+```bash
+# View database in visual editor
+npm run db:studio
+
+# Push database schema
+npm run db:push
+
+# Start Docker database (if using local)
+npm run db:start
+
+# Stop Docker database
+npm run db:stop
+```
+
+### Testing
+```bash
+# Run complete end-to-end test
+node test-upload-flow.js
+
+# View test results
+cat TEST_END2END_REPORT.md
+```
+
+### Build & Deploy
+```bash
+# Build all packages
+npm run build
+
+# Check all packages
+npm run check-types
+```
+
+---
+
+## ✅ Next Steps After Setup
+
+### Immediate Actions
+1. **Test the Application**
+   ```bash
+   # The app is already running at http://localhost:3001
+   # Just open it in your browser!
+   open http://localhost:3001
+   ```
+
+2. **Run the Test Suite** (optional)
+   ```bash
+   # In a new terminal
+   node test-upload-flow.js
+   ```
+   This verifies that:
+   - ✅ Server is responding
+   - ✅ File uploads work
+   - ✅ Database stores data
+   - ✅ Error handling works
+
+3. **View the Database** (optional)
+   ```bash
+   npm run db:studio
+   # Opens http://localhost:5555
+   # You can inspect stored chunks here
+   ```
+
+### Development Tips
+- **Auto-reload**: Changes to code automatically reload the app
+- **Error messages**: Check browser console (F12) for any issues
+- **API calls**: Check "Network" tab in DevTools to see requests
+- **Multiple terminals**: Open services in separate terminals for easier debugging
+
+---
+
+## 🏗️ Architecture Overview
 
 This system implements a **durable, fault-tolerant pipeline** for handling large recording uploads by breaking them into manageable chunks. It ensures data integrity through:
 
