@@ -1,0 +1,122 @@
+
+> dev
+> turbo dev
+
+• turbo 2.9.3
+
+   • Packages in scope: @my-better-t-app/config, @my-better-t-app/db, @my-better-t-app/env, @my-better-t-app/ui, server, web
+   • Running dev in 6 packages
+   • Remote caching disabled
+
+server:dev: cache bypass, force executing 2a2e01df97216a35
+web:dev: cache bypass, force executing abb25dfaef3279b6
+web:dev: 
+web:dev: > web@0.1.0 dev
+web:dev: > next dev --port 3001
+web:dev: 
+server:dev: 
+server:dev: > dev
+server:dev: > bun run --hot src/index.ts
+server:dev: 
+server:dev: ◇ injecting env (6) from ../../.env // tip: ⌘ enable debugging { debug: true }
+server:dev: Started development server: http://localhost:3000
+web:dev: ▲ Next.js 16.2.2 (Turbopack)
+web:dev: - Local:         http://localhost:3001
+web:dev: - Network:       http://192.168.1.178:3001
+web:dev: - Environments: .env.local
+web:dev: ✓ Ready in 318ms
+web:dev: ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+web:dev:  We detected multiple lockfiles and selected the directory of /Users/apple/package-lock.json as the root directory.
+web:dev:  To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+web:dev:    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+web:dev:  Detected additional lockfiles: 
+web:dev:    * /Users/apple/attack_F/attack5/package-lock.json
+web:dev: 
+web:dev: 
+server:dev: <-- GET /
+server:dev: --> GET / [32m200[0m 1ms
+server:dev: <-- GET /
+server:dev: --> GET / [32m200[0m 0ms
+server:dev: <-- POST /api/upload
+server:dev: [Upload] Starting upload request
+server:dev: [Upload] Form data parsed in 1ms
+server:dev: [Upload] Received: sessionId=test-1775579258097, chunkIndex=0, fileSize=262144
+server:dev: [Upload] Checksums - expected: 47178b5cf503a0e4..., computed: 47178b5cf503a0e4...
+server:dev: [Upload] Checksum verified in 2ms
+server:dev: [Upload] Inserting into database - 2ms
+server:dev: Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+server:dev: In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+server:dev: 
+server:dev: To prepare for this change:
+server:dev: - If you want the current behavior, explicitly use 'sslmode=verify-full'
+server:dev: - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+server:dev: 
+server:dev: See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+server:dev:       at deprecatedSslModeWarning (/Users/apple/attack_F/attack5/node_modules/pg-connection-string/index.js:216:13)
+server:dev:       at parse (/Users/apple/attack_F/attack5/node_modules/pg-connection-string/index.js:143:11)
+server:dev:       at new ConnectionParameters (/Users/apple/attack_F/attack5/node_modules/pg/lib/connection-parameters.js:60:42)
+server:dev:       at new Client (/Users/apple/attack_F/attack5/node_modules/pg/lib/client.js:43:33)
+server:dev:       at newClient (/Users/apple/attack_F/attack5/node_modules/pg-pool/index.js:241:20)
+server:dev:       at connect (/Users/apple/attack_F/attack5/node_modules/pg-pool/index.js:235:10)
+server:dev:       at query (/Users/apple/attack_F/attack5/node_modules/pg-pool/index.js:449:10)
+server:dev:       at <anonymous> (/Users/apple/attack_F/attack5/node_modules/drizzle-orm/node-postgres/session.js:113:33)
+server:dev:       at queryWithCache (/Users/apple/attack_F/attack5/node_modules/drizzle-orm/pg-core/session.js:39:22)
+server:dev: 
+server:dev: [Upload] DB insert successful - 2600ms
+server:dev: [Upload] Uploading to S3 - 2600ms
+server:dev: [Upload] S3 upload successful - 2685ms
+server:dev: [Upload] Total time: 2981ms
+server:dev: --> POST /api/upload [32m200[0m 3s
+server:dev: <-- POST /api/upload
+server:dev: [Upload] Starting upload request
+server:dev: [Upload] Form data parsed in 0ms
+server:dev: [Upload] Received: sessionId=test, chunkIndex=0, fileSize=4
+server:dev: --> POST /api/upload [33m400[0m 0ms
+server:dev: <-- POST /api/upload
+server:dev: [Upload] Starting upload request
+server:dev: [Upload] Form data parsed in 0ms
+server:dev: [Upload] Received: sessionId=test, chunkIndex=0, fileSize=9
+server:dev: [Upload] Checksums - expected: 0000000000000000..., computed: 916f0027a575074c...
+server:dev: --> POST /api/upload [33m400[0m 0ms
+server:dev: <-- GET /
+server:dev: --> GET / [32m200[0m 0ms
+server:dev: <-- GET /
+server:dev: --> GET / [32m200[0m 0ms
+server:dev: <-- GET /
+server:dev: --> GET / [32m200[0m 0ms
+web:dev:  GET / 200 in 346ms (next.js: 138ms, application-code: 208ms)
+web:dev:  GET /recorder 200 in 54ms (next.js: 29ms, application-code: 25ms)
+server:dev: <-- GET /
+server:dev: --> GET / [32m200[0m 0ms
+server:dev: <-- POST /api/upload
+server:dev: [Upload] Starting upload request
+server:dev: [Upload] Form data parsed in 2ms
+server:dev: [Upload] Received: sessionId=test-1775579581770, chunkIndex=0, fileSize=262144
+server:dev: [Upload] Checksums - expected: be0ce39b8ead229a..., computed: be0ce39b8ead229a...
+server:dev: [Upload] Checksum verified in 3ms
+server:dev: [Upload] Inserting into database - 3ms
+server:dev: [Upload] DB insert successful - 2738ms
+server:dev: [Upload] Uploading to S3 - 2738ms
+server:dev: [Upload] S3 upload successful - 2769ms
+server:dev: [Upload] Total time: 3045ms
+server:dev: --> POST /api/upload [32m200[0m 3s
+server:dev: <-- POST /api/upload
+server:dev: [Upload] Starting upload request
+server:dev: [Upload] Form data parsed in 0ms
+server:dev: [Upload] Received: sessionId=test, chunkIndex=0, fileSize=4
+server:dev: --> POST /api/upload [33m400[0m 0ms
+server:dev: <-- POST /api/upload
+server:dev: [Upload] Starting upload request
+server:dev: [Upload] Form data parsed in 1ms
+server:dev: [Upload] Received: sessionId=test, chunkIndex=0, fileSize=9
+server:dev: [Upload] Checksums - expected: 0000000000000000..., computed: 916f0027a575074c...
+server:dev: --> POST /api/upload [33m400[0m 1ms
+web:dev: [?25h
+ ERROR  server#dev: command (/Users/apple/attack_F/attack5/apps/server) /Users/apple/.nvm/versions/node/v24.12.0/bin/npm run dev exited (137)
+
+ Tasks:    0 successful, 2 total
+Cached:    0 cached, 2 total
+  Time:    5m58.254s 
+Failed:    server#dev
+
+ ERROR  run failed: command  exited (137)
