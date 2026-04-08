@@ -34,7 +34,7 @@ uploadRoute.post("/upload", async (c) => {
     }
 
     const index = Number(chunkIndex);
-    const id = `${sessionId}-${index}`;
+    const id = `${sessionId}-${index}`; 
 
     const buffer = Buffer.from(await file.arrayBuffer());
 

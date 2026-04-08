@@ -1,5 +1,3 @@
-// lib/queue.ts
-
 export type QueueItem = {
   id: string;
   sessionId: string;

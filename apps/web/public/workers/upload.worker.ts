@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
 export {};
 
-import { addToQueue, getNextBatch } from "../lib/queue";
-import { writeChunk } from "../lib/opfs";
-import { uploadItem } from "../lib/uploader";
+import { addToQueue, getNextBatch } from "@my-better-t-app/upload/queue";
+import { writeChunk } from "@my-better-t-app/upload/opfs";
+import { uploadItem } from "@my-better-t-app/upload/uploader";
 
 const ctx: DedicatedWorkerGlobalScope = self as any;
 

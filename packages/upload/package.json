@@ -1,0 +1,16 @@
+{
+  "name": "@my-better-t-app/upload",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./queue": "./src/queue.ts",
+    "./opfs": "./src/opfs.ts",
+    "./uploader": "./src/uploader.ts"
+  },
+  "devDependencies": {
+    "@my-better-t-app/config": "*",
+    "@types/bun": "^1.3.4",
+    "typescript": "^5"
+  }
+}
