@@ -1,4 +1,4 @@
-# Audio Chunk Ingestion Pipeline
+# StreamForge
 
 <p align="center">
   <strong>Portfolio-grade, checksum-verified audio chunk ingestion pipeline.</strong>
